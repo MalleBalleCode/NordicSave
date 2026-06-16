@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Inter Tight", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #F7F9FC;
+  color: #0B1F3A;
+}
+
+/* Visible keyboard focus everywhere */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #2E6DA4;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Tabular numerals for the savings counter — keeps digits from jittering in width */
+.tabnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subtle grid texture used behind the hero, evokes a ledger / spreadsheet without being literal */
+.ledger-grid {
+  background-image:
+    linear-gradient(to right, rgba(11, 31, 58, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(11, 31, 58, 0.05) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
