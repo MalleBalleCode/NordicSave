@@ -52,3 +52,4 @@ hosting-miljöer, t.ex. Vercel).
 - Byt ut platshållartexter mot riktiga kundcase när ni har dem
 - Deploya till Vercel och koppla domänen via Cloudflare DNS (CNAME till
   Vercel, proxy avstängd/grått moln)
+Uppdaterad
