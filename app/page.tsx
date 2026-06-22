@@ -1,27 +1,46 @@
 import SavingsCalculator from "@/components/SavingsCalculator";
 import LeadForm from "@/components/LeadForm";
+import { auth } from "@/auth";
+import Link from "next/link";
 
 const PROVIDERS = ["Telia", "Tele2", "Bahnhof", "Telenor", "Comhem"];
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth();
+
   return (
     <main className="min-h-screen bg-surface">
-      {/* ============ NAV ============ */}
       <header className="border-b border-line bg-surface/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-content mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
           <span className="font-display font-bold text-lg tracking-tightest text-ink">
             NordicSave
           </span>
-          <a
-            href="#lead-form"
-            className="text-sm font-semibold text-action hover:text-action/80 transition-colors"
-          >
-            Kom igång →
-          </a>
+          <div className="flex items-center gap-4">
+            
+              href="#lead-form"
+              className="text-sm font-semibold text-action hover:text-action/80 transition-colors"
+            >
+              Kom igång →
+            </a>
+            {session?.user ? (
+              <Link
+                href="/dashboard"
+                className="text-sm font-medium px-3.5 py-1.5 rounded-lg border border-line bg-white text-ink hover:border-action/40 transition-colors"
+              >
+                Min sida
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="text-sm font-medium px-3.5 py-1.5 rounded-lg border border-line bg-white text-ink hover:border-action/40 transition-colors"
+              >
+                Logga in
+              </Link>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* ============ HERO ============ */}
       <section className="relative ledger-grid overflow-hidden border-b border-line">
         <div className="max-w-content mx-auto px-6 sm:px-8 py-16 sm:py-24 grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
           <div>
@@ -37,7 +56,6 @@ export default function Home() {
               och sänker din månadskostnad. Du lägger 2 minuter — vi sköter
               resten.
             </p>
-
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted mb-10">
               <span>Förhandlar direkt med:</span>
               <div className="flex flex-wrap gap-3 font-medium text-ink_soft">
@@ -47,17 +65,14 @@ export default function Home() {
               </div>
             </div>
           </div>
-
           <SavingsCalculator />
         </div>
       </section>
 
-      {/* ============ HOW IT WORKS ============ */}
       <section className="max-w-content mx-auto px-6 sm:px-8 py-16 sm:py-24">
         <h2 className="font-display font-bold tracking-tightest text-ink text-2xl sm:text-3xl mb-12 max-w-lg">
           Tre steg. Ingen risk för dig.
         </h2>
-
         <div className="grid sm:grid-cols-3 gap-8 sm:gap-6">
           <Step
             label="Dela dina avtal"
@@ -74,11 +89,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ============ LEAD FORM ============ */}
-      <section
-        id="lead-form"
-        className="border-t border-line bg-white"
-      >
+      <section id="lead-form" className="border-t border-line bg-white">
         <div className="max-w-content mx-auto px-6 sm:px-8 py-16 sm:py-24 grid lg:grid-cols-2 gap-12 items-center">
           <div>
             <h2 className="font-display font-bold tracking-tightest text-ink text-2xl sm:text-3xl mb-4">
@@ -93,7 +104,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ============ FOOTER ============ */}
       <footer className="border-t border-line">
         <div className="max-w-content mx-auto px-6 sm:px-8 py-8 flex flex-col sm:flex-row justify-between items-center gap-3 text-sm text-muted">
           <span>© 2026 NordicSave AB</span>
@@ -107,9 +117,7 @@ export default function Home() {
 function Step({ label, text }: { label: string; text: string }) {
   return (
     <div className="border-t-2 border-ink pt-5">
-      <p className="font-display font-semibold text-lg text-ink mb-2">
-        {label}
-      </p>
+      <p className="font-display font-semibold text-lg text-ink mb-2">{label}</p>
       <p className="text-sm text-muted leading-relaxed">{text}</p>
     </div>
   );
