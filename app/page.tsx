@@ -16,24 +16,15 @@ export default async function Home() {
             NordicSave
           </span>
           <div className="flex items-center gap-4">
-            
-              href="#lead-form"
-              className="text-sm font-semibold text-action hover:text-action/80 transition-colors"
-            >
+            <a href="#lead-form" className="text-sm font-semibold text-action hover:text-action/80 transition-colors">
               Kom igång →
             </a>
             {session?.user ? (
-              <Link
-                href="/dashboard"
-                className="text-sm font-medium px-3.5 py-1.5 rounded-lg border border-line bg-white text-ink hover:border-action/40 transition-colors"
-              >
+              <Link href="/dashboard" className="text-sm font-medium px-3.5 py-1.5 rounded-lg border border-line bg-white text-ink hover:border-action/40 transition-colors">
                 Min sida
               </Link>
             ) : (
-              <Link
-                href="/login"
-                className="text-sm font-medium px-3.5 py-1.5 rounded-lg border border-line bg-white text-ink hover:border-action/40 transition-colors"
-              >
+              <Link href="/login" className="text-sm font-medium px-3.5 py-1.5 rounded-lg border border-line bg-white text-ink hover:border-action/40 transition-colors">
                 Logga in
               </Link>
             )}
@@ -52,9 +43,7 @@ export default async function Home() {
               <span className="text-action"> Vi fixar det.</span>
             </h1>
             <p className="text-lg text-ink_soft leading-relaxed mb-8 max-w-md">
-              NordicSave analyserar dina avtal, förhandlar med leverantörerna
-              och sänker din månadskostnad. Du lägger 2 minuter — vi sköter
-              resten.
+              NordicSave analyserar dina avtal, förhandlar med leverantörerna och sänker din månadskostnad. Du lägger 2 minuter — vi sköter resten.
             </p>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted mb-10">
               <span>Förhandlar direkt med:</span>
@@ -74,18 +63,9 @@ export default async function Home() {
           Tre steg. Ingen risk för dig.
         </h2>
         <div className="grid sm:grid-cols-3 gap-8 sm:gap-6">
-          <Step
-            label="Dela dina avtal"
-            text="Skicka över dina nuvarande fakturor för bredband och streaming. Tar två minuter."
-          />
-          <Step
-            label="Vi förhandlar"
-            text="Med din fullmakt kontaktar vi leverantörerna och hittar bästa möjliga pris."
-          />
-          <Step
-            label="Du sparar"
-            text="Vi tar en engångsavgift motsvarande en månads besparing. Resten är din vinst."
-          />
+          <Step label="Dela dina avtal" text="Skicka över dina nuvarande fakturor för bredband och streaming. Tar två minuter." />
+          <Step label="Vi förhandlar" text="Med din fullmakt kontaktar vi leverantörerna och hittar bästa möjliga pris." />
+          <Step label="Du sparar" text="Vi tar en engångsavgift motsvarande en månads besparing. Resten är din vinst." />
         </div>
       </section>
 
@@ -96,8 +76,7 @@ export default async function Home() {
               Redo att sänka din räkning?
             </h2>
             <p className="text-ink_soft leading-relaxed max-w-md">
-              Lämna dina uppgifter och vi återkommer med en kostnadsfri
-              analys av vad du kan spara — utan förpliktelser.
+              Lämna dina uppgifter och vi återkommer med en kostnadsfri analys av vad du kan spara — utan förpliktelser.
             </p>
           </div>
           <LeadForm />
