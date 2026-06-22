@@ -1,13 +1,10 @@
 import SavingsCalculator from "@/components/SavingsCalculator";
 import LeadForm from "@/components/LeadForm";
-import { auth } from "@/auth";
 import Link from "next/link";
 
 const PROVIDERS = ["Telia", "Tele2", "Bahnhof", "Telenor", "Comhem"];
 
-export default async function Home() {
-  const session = await auth();
-
+export default function Home() {
   return (
     <main className="min-h-screen bg-surface">
       <header className="border-b border-line bg-surface/80 backdrop-blur-sm sticky top-0 z-50">
@@ -19,15 +16,9 @@ export default async function Home() {
             <a href="#lead-form" className="text-sm font-semibold text-action hover:text-action/80 transition-colors">
               Kom igång →
             </a>
-            {session?.user ? (
-              <Link href="/dashboard" className="text-sm font-medium px-3.5 py-1.5 rounded-lg border border-line bg-white text-ink hover:border-action/40 transition-colors">
-                Min sida
-              </Link>
-            ) : (
-              <Link href="/login" className="text-sm font-medium px-3.5 py-1.5 rounded-lg border border-line bg-white text-ink hover:border-action/40 transition-colors">
-                Logga in
-              </Link>
-            )}
+            <Link href="/login" className="text-sm font-medium px-3.5 py-1.5 rounded-lg border border-line bg-white text-ink hover:border-action/40 transition-colors">
+              Logga in
+            </Link>
           </div>
         </div>
       </header>
