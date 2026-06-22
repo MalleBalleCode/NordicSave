@@ -3,7 +3,6 @@ import LeadForm from "@/components/LeadForm";
 import Link from "next/link";
 
 const PROVIDERS = ["Telia", "Tele2", "Bahnhof", "Telenor", "Comhem"];
-
 export default function Home() {
   return (
     <main className="min-h-screen bg-surface">
