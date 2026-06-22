@@ -4,6 +4,8 @@ import { useState, FormEvent } from "react";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
+const FORMSPREE_URL = "https://formspree.io/f/xlgyelqy";
+
 export default function LeadForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [email, setEmail] = useState("");
@@ -13,11 +15,21 @@ export default function LeadForm() {
     e.preventDefault();
     setStatus("submitting");
 
-    // TODO: koppla mot riktigt API-anrop / CRM (t.ex. HubSpot) här.
-    // Just nu simuleras ett lyckat svar så flödet går att testa direkt.
     try {
-      await new Promise((resolve) => setTimeout(resolve, 700));
-      setStatus("success");
+      const response = await fetch(FORMSPREE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ name, email }),
+      });
+
+      if (response.ok) {
+        setStatus("success");
+      } else {
+        setStatus("error");
+      }
     } catch {
       setStatus("error");
     }
@@ -59,6 +71,7 @@ export default function LeadForm() {
           <input
             id="name"
             type="text"
+            name="name"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -74,6 +87,7 @@ export default function LeadForm() {
           <input
             id="email"
             type="email"
+            name="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
