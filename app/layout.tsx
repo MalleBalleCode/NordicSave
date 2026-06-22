@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Inter_Tight } from "next/font/google";
+import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 
 const interTight = Inter_Tight({
@@ -30,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="sv">
       <body className={`${interTight.variable} ${inter.variable} font-body`}>
-        {children}
+        <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
   );
