@@ -1,22 +1,18 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import PgAdapter from "@auth/pg-adapter";
 import { Pool } from "pg";
 import bcrypt from "bcryptjs";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
-  max: 10,
 });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PgAdapter(pool),
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
     error: "/login",
-    newUser: "/dashboard",
   },
   providers: [
     CredentialsProvider({
@@ -29,32 +25,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Ange e-post och lösenord.");
         }
-
         const email = (credentials.email as string).toLowerCase().trim();
         const password = credentials.password as string;
-
         const result = await pool.query(
           "SELECT id, name, email, password FROM users WHERE email = $1 LIMIT 1",
           [email]
         );
-
         const user = result.rows[0];
-
         if (!user || !user.password) {
           throw new Error("Fel e-post eller lösenord.");
         }
-
         const passwordOk = await bcrypt.compare(password, user.password);
-
         if (!passwordOk) {
           throw new Error("Fel e-post eller lösenord.");
         }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name ?? null,
-        };
+        return { id: user.id, email: user.email, name: user.name ?? null };
       },
     }),
   ],
