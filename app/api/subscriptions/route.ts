@@ -7,7 +7,7 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
-const VALID_CATEGORIES = ["bredband", "streaming", "mobilabonnemang", "annat"];
+const VALID_CATEGORIES = ["bredband", "streaming", "mobilabonnemang"];
 
 export async function GET() {
   const session = await auth();
@@ -15,7 +15,7 @@ export async function GET() {
     return NextResponse.json({ error: "Inte inloggad." }, { status: 401 });
   }
   const result = await pool.query(
-    "SELECT id, category, provider, cost, created_at FROM subscriptions WHERE user_id = $1 ORDER BY created_at ASC",
+    "SELECT id, category, provider, cost, contract_start, contract_end, created_at FROM subscriptions WHERE user_id = $1 ORDER BY created_at ASC",
     [session.user.id]
   );
   return NextResponse.json({ subscriptions: result.rows });
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Inte inloggad." }, { status: 401 });
   }
   const body = await req.json();
-  const { category, provider, cost } = body;
+  const { category, provider, cost, contract_start, contract_end } = body;
   if (!category || !provider || cost === undefined) {
     return NextResponse.json({ error: "Kategori, leverantör och kostnad krävs." }, { status: 400 });
   }
@@ -39,8 +39,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Kostnad måste vara ett positivt heltal." }, { status: 400 });
   }
   const result = await pool.query(
-    "INSERT INTO subscriptions (user_id, category, provider, cost) VALUES ($1, $2, $3, $4) RETURNING id, category, provider, cost, created_at",
-    [session.user.id, category, provider.trim(), parsedCost]
+    "INSERT INTO subscriptions (user_id, category, provider, cost, contract_start, contract_end) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, category, provider, cost, contract_start, contract_end, created_at",
+    [session.user.id, category, provider.trim(), parsedCost, contract_start || null, contract_end || null]
   );
   return NextResponse.json({ subscription: result.rows[0] }, { status: 201 });
 }
