@@ -8,7 +8,6 @@ const CATEGORIES = [
   { value: "bredband", label: "Bredband", placeholder: "t.ex. Telia, Bahnhof, Telenor" },
   { value: "streaming", label: "Streaming", placeholder: "t.ex. Netflix, Spotify, HBO Max" },
   { value: "mobilabonnemang", label: "Mobilabonnemang", placeholder: "t.ex. Comviq, Tele2, Halebop" },
-  { value: "annat", label: "Annat", placeholder: "t.ex. El, Försäkring" },
 ];
 
 const LOW_RATE = 0.18;
