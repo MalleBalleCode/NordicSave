@@ -81,6 +81,17 @@ export default function DashboardPage() {
     items: subscriptions.filter((s) => s.category === cat.value),
   })).filter((g) => g.items.length > 0);
 
+  // Alla kort inklusive formulärkortet om det är öppet
+  type GridItem = { type: "form" } | { type: "subscription"; data: Subscription; groupLabel: string };
+
+  const gridItems: GridItem[] = [];
+  if (formOpen) gridItems.push({ type: "form" });
+  grouped.forEach((group) => {
+    group.items.forEach((s) => {
+      gridItems.push({ type: "subscription", data: s, groupLabel: group.label });
+    });
+  });
+
   return (
     <div className="min-h-screen bg-surface flex flex-col">
       <header className="border-b border-line bg-surface/80 backdrop-blur-sm sticky top-0 z-50">
@@ -118,78 +129,73 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {formOpen && (
-          <div className="rounded-2xl border border-line bg-white p-6 sm:p-8 shadow-[0_1px_2px_rgba(11,31,58,0.04),0_12px_32px_-12px_rgba(11,31,58,0.12)] mb-8 max-w-lg">
-            <form onSubmit={handleAdd} className="space-y-4">
-              {formError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{formError}</div>}
-              <div>
-                <label className="block text-sm text-ink_soft mb-1.5">Kategori</label>
-                <select value={category} onChange={(e) => { setCategory(e.target.value); setProvider(""); }} className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink focus:bg-white transition-colors">
-                  {CATEGORIES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm text-ink_soft mb-1.5">Leverantör</label>
-                <input type="text" required value={provider} onChange={(e) => setProvider(e.target.value)} placeholder={currentCategory.placeholder} className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink focus:bg-white transition-colors" />
-              </div>
-              <div>
-                <label className="block text-sm text-ink_soft mb-1.5">Månadskostnad (kr)</label>
-                <input type="number" required min="0" value={cost} onChange={(e) => setCost(e.target.value)} placeholder="t.ex. 399" className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink focus:bg-white transition-colors tabnum" />
-              </div>
-              <div>
-                <label className="block text-sm text-ink_soft mb-1.5">Bindningstid <span className="text-muted font-normal">(valfritt)</span></label>
-                <p className="text-xs text-muted mb-2">Den hittar du oftast på din faktura eller i operatörens app. Du kan även kontakta deras kundtjänst om du är osäker.</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <p className="text-xs text-muted mb-1">Från</p>
-                    <input type="date" value={contractStart} onChange={(e) => setContractStart(e.target.value)} className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink focus:bg-white transition-colors" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted mb-1">Till</p>
-                    <input type="date" value={contractEnd} onChange={(e) => setContractEnd(e.target.value)} className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink focus:bg-white transition-colors" />
-                  </div>
-                </div>
-              </div>
-              <button type="submit" disabled={saving} className="w-full rounded-xl bg-action px-6 py-3.5 text-base font-semibold text-white transition-colors hover:bg-action/90 disabled:opacity-60">{saving ? "Sparar…" : "Lägg till"}</button>
-            </form>
-          </div>
-        )}
-
         {loading ? (
           <p className="text-muted text-sm">Laddar…</p>
-        ) : subscriptions.length === 0 ? (
+        ) : gridItems.length === 0 ? (
           <div className="rounded-2xl border-2 border-dashed border-line p-10 text-center max-w-lg">
             <p className="font-display font-semibold text-ink text-lg mb-2">Inga abonnemang ännu</p>
             <p className="text-sm text-muted">Klicka på "Lägg till abonnemang" ovan för att komma igång.</p>
           </div>
         ) : (
           <div className="space-y-8">
-            {grouped.map((group) => (
-              <div key={group.value}>
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted mb-3">{group.label}</p>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {group.items.map((s) => (
-                    <div key={s.id} className="rounded-2xl border border-line bg-white p-5">
-                      <div className="flex items-start justify-between mb-3">
-                        <p className="font-display font-semibold text-ink text-lg">{s.provider}</p>
-                        <button onClick={() => handleDelete(s.id)} className="text-xs text-muted hover:text-red-500 transition-colors ml-2" aria-label={`Ta bort ${s.provider}`}>Ta bort</button>
-                      </div>
-                      <p className="font-display font-bold text-2xl text-ink tabnum mb-1">{formatSEK(s.cost)} <span className="text-sm font-normal text-muted">kr/mån</span></p>
-                      {(s.contract_start || s.contract_end) && (
-                        <p className="text-xs text-muted mt-2">Bindningstid: {formatDate(s.contract_start) ?? "?"} – {formatDate(s.contract_end) ?? "?"}</p>
-                      )}
+            <div className="grid sm:grid-cols-2 gap-4 items-start">
+              {gridItems.map((item, i) => {
+                if (item.type === "form") {
+                  return (
+                    <div key="form" className="rounded-2xl border border-action/30 bg-white p-6 shadow-[0_1px_2px_rgba(11,31,58,0.04),0_12px_32px_-12px_rgba(11,31,58,0.12)]">
+                      <p className="font-display font-semibold text-lg text-ink tracking-tightest mb-4">Nytt abonnemang</p>
+                      <form onSubmit={handleAdd} className="space-y-4">
+                        {formError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{formError}</div>}
+                        <div>
+                          <label className="block text-sm text-ink_soft mb-1.5">Kategori</label>
+                          <select value={category} onChange={(e) => { setCategory(e.target.value); setProvider(""); }} className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink focus:bg-white transition-colors">
+                            {CATEGORIES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm text-ink_soft mb-1.5">Leverantör</label>
+                          <input type="text" required value={provider} onChange={(e) => setProvider(e.target.value)} placeholder={currentCategory.placeholder} className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink focus:bg-white transition-colors" />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-ink_soft mb-1.5">Månadskostnad (kr)</label>
+                          <input type="number" required min="0" value={cost} onChange={(e) => setCost(e.target.value)} placeholder="t.ex. 399" className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink focus:bg-white transition-colors tabnum" />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-ink_soft mb-1.5">Bindningstid <span className="text-muted font-normal">(valfritt)</span></label>
+                          <p className="text-xs text-muted mb-2">Den hittar du oftast på din faktura eller i operatörens app. Du kan även kontakta deras kundtjänst om du är osäker.</p>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <p className="text-xs text-muted mb-1">Från</p>
+                              <input type="date" value={contractStart} onChange={(e) => setContractStart(e.target.value)} className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink focus:bg-white transition-colors" />
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted mb-1">Till</p>
+                              <input type="date" value={contractEnd} onChange={(e) => setContractEnd(e.target.value)} className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink focus:bg-white transition-colors" />
+                            </div>
+                          </div>
+                        </div>
+                        <button type="submit" disabled={saving} className="w-full rounded-xl bg-action px-6 py-3.5 text-base font-semibold text-white transition-colors hover:bg-action/90 disabled:opacity-60">{saving ? "Sparar…" : "Lägg till"}</button>
+                      </form>
                     </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-            <div className="flex items-center justify-between rounded-2xl border border-ink/10 bg-ink/[0.03] px-5 py-4 max-w-lg">
-              <p className="font-medium text-ink">Totalt per månad</p>
-              <p className="font-display font-bold text-ink tabnum">{formatSEK(totalCost)} kr/mån</p>
+                  );
+                }
+                const s = item.data;
+                return (
+                  <div key={s.id} className="rounded-2xl border border-line bg-white p-5">
+                    <div className="flex items-start justify-between mb-1">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-widest text-muted mb-1">{item.groupLabel}</p>
+                        <p className="font-display font-semibold text-ink text-lg">{s.provider}</p>
+                      </div>
+                      <button onClick={() => handleDelete(s.id)} className="text-xs text-muted hover:text-red-500 transition-colors ml-2 mt-1" aria-label={`Ta bort ${s.provider}`}>Ta bort</button>
+                    </div>
+                    <p className="font-display font-bold text-2xl text-ink tabnum mt-2">{formatSEK(s.cost)} <span className="text-sm font-normal text-muted">kr/mån</span></p>
+                    {(s.contract_start || s.contract_end) && (
+                      <p className="text-xs text-muted mt-2">Bindningstid: {formatDate(s.contract_start) ?? "?"} – {formatDate(s.contract_end) ?? "?"}</p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          </div>
-        )}
-      </main>
-    </div>
-  );
-}
+            {subscriptions.length > 0 && (
+              <div className="flex items-center
