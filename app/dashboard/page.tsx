@@ -123,7 +123,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <label className="block text-sm text-ink_soft mb-1.5">Bindningstid <span className="text-muted font-normal">(valfritt)</span></label>
-                <p className="text-xs text-muted mb-2">Hittar du den på din faktura eller i operatörens app. Ring kundtjänst om du är osäker.</p>
+                <p className="text-xs text-muted mb-2">Den hittar du oftast på din faktura eller i operatörens app. Du kan även kontakta deras kundtjänst om du är osäker.</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <p className="text-xs text-muted mb-1">Från</p>
