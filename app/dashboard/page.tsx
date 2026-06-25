@@ -42,4 +42,4 @@ export default function DashboardPage() {
   const [contractEnd, setContractEnd] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const
+  const currentCategory = CATEGORIES.find((c) => c.value === category)!;
