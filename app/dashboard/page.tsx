@@ -198,4 +198,14 @@ export default function DashboardPage() {
               })}
             </div>
             {subscriptions.length > 0 && (
-              <div className="flex items-center
+              <div className="flex items-center justify-between rounded-2xl border border-ink/10 bg-ink/[0.03] px-5 py-4">
+                <p className="font-medium text-ink">Totalt per månad</p>
+                <p className="font-display font-bold text-ink tabnum">{formatSEK(totalCost)} kr/mån</p>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
