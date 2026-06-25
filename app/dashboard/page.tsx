@@ -38,7 +38,7 @@ export default function DashboardPage() {
   const [category, setCategory] = useState("bredband");
   const [provider, setProvider] = useState("");
   const [cost, setCost] = useState("");
-  const [contractStart, setContractStart] = useState("");
+  const [contractStart, setContractStart] = useState("")
   const [contractEnd, setContractEnd] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
