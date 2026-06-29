@@ -1,7 +1,7 @@
 import LeadForm from "@/components/LeadForm";
 import Link from "next/link";
 
-const PROVIDERS = ["Telia", "Tele2", "Bahnhof", "Telenor", "Comhem"];
+const PROVIDERS = ["Allente", "Telia", "Tre", "Telenor", "och många fler!"];
 
 const CASES = [
   {
