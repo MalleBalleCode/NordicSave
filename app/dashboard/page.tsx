@@ -81,16 +81,25 @@ export default function DashboardPage() {
     items: subscriptions.filter((s) => s.category === cat.value),
   })).filter((g) => g.items.length > 0);
 
-  // Alla kort inklusive formulärkortet om det är öppet
-  type GridItem = { type: "form" } | { type: "subscription"; data: Subscription; groupLabel: string };
+  const allSubscriptions = grouped.flatMap((group) =>
+    group.items.map((s) => ({ data: s, groupLabel: group.label }))
+  );
 
-  const gridItems: GridItem[] = [];
-  if (formOpen) gridItems.push({ type: "form" });
-  grouped.forEach((group) => {
-    group.items.forEach((s) => {
-      gridItems.push({ type: "subscription", data: s, groupLabel: group.label });
-    });
-  });
+  const SubCard = ({ s, groupLabel }: { s: Subscription; groupLabel: string }) => (
+    <div className="rounded-2xl border border-line bg-white p-5">
+      <div className="flex items-start justify-between mb-1">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted mb-1">{groupLabel}</p>
+          <p className="font-display font-semibold text-ink text-lg">{s.provider}</p>
+        </div>
+        <button onClick={() => handleDelete(s.id)} className="text-xs text-muted hover:text-red-500 transition-colors ml-2 mt-1">Ta bort</button>
+      </div>
+      <p className="font-display font-bold text-2xl text-ink tabnum mt-2">{formatSEK(s.cost)} <span className="text-sm font-normal text-muted">kr/mån</span></p>
+      {(s.contract_start || s.contract_end) && (
+        <p className="text-xs text-muted mt-2">Bindningstid: {formatDate(s.contract_start) ?? "?"} – {formatDate(s.contract_end) ?? "?"}</p>
+      )}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
@@ -100,13 +109,11 @@ export default function DashboardPage() {
           <button onClick={() => signOut({ callbackUrl: "/" })} className="text-sm font-medium text-muted hover:text-ink transition-colors">Logga ut</button>
         </div>
       </header>
-
       <main className="flex-1 max-w-content mx-auto w-full px-6 sm:px-8 py-12">
         <div className="mb-10">
           <h1 className="font-display font-extrabold tracking-tightest text-ink text-3xl sm:text-4xl mb-2">Mina abonnemang</h1>
           <p className="text-ink_soft">Lägg till dina nuvarande abonnemang så beräknar vi vad du kan spara.</p>
         </div>
-
         <div className="grid sm:grid-cols-3 gap-4 mb-10">
           <div className="rounded-2xl border border-line bg-white p-6">
             <p className="text-xs font-medium text-muted uppercase tracking-widest mb-2">Aktiva abonnemang</p>
@@ -121,28 +128,21 @@ export default function DashboardPage() {
             <p className="font-display font-bold text-3xl tracking-tightest text-gain_dark tabnum">{totalCost > 0 ? `${formatSEK(lowSaving)}–${formatSEK(highSaving)} kr` : "—"}</p>
           </div>
         </div>
-
         <div className="mb-6">
           <button onClick={() => setFormOpen((v) => !v)} className="inline-flex items-center gap-2 rounded-xl bg-action px-5 py-2.5 text-sm font-semibold text-white hover:bg-action/90 transition-colors">
             <span>{formOpen ? "−" : "+"}</span>
             <span>{formOpen ? "Stäng" : "Lägg till abonnemang"}</span>
           </button>
         </div>
-
         {loading ? (
           <p className="text-muted text-sm">Laddar…</p>
-        ) : gridItems.length === 0 ? (
-          <div className="rounded-2xl border-2 border-dashed border-line p-10 text-center max-w-lg">
-            <p className="font-display font-semibold text-ink text-lg mb-2">Inga abonnemang ännu</p>
-            <p className="text-sm text-muted">Klicka på "Lägg till abonnemang" ovan för att komma igång.</p>
-          </div>
         ) : (
           <div className="space-y-8">
-            <div className="grid sm:grid-cols-2 gap-4 items-start">
-              {gridItems.map((item, i) => {
-                if (item.type === "form") {
-                  return (
-                    <div key="form" className="rounded-2xl border border-action/30 bg-white p-6 shadow-[0_1px_2px_rgba(11,31,58,0.04),0_12px_32px_-12px_rgba(11,31,58,0.12)]">
+            {(formOpen || allSubscriptions.length > 0) && (
+              <div className="grid sm:grid-cols-2 gap-4 items-start">
+                <div className="flex flex-col gap-4">
+                  {formOpen && (
+                    <div className="rounded-2xl border border-action/30 bg-white p-6 shadow-[0_1px_2px_rgba(11,31,58,0.04),0_12px_32px_-12px_rgba(11,31,58,0.12)]">
                       <p className="font-display font-semibold text-lg text-ink tracking-tightest mb-4">Nytt abonnemang</p>
                       <form onSubmit={handleAdd} className="space-y-4">
                         {formError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{formError}</div>}
@@ -177,26 +177,24 @@ export default function DashboardPage() {
                         <button type="submit" disabled={saving} className="w-full rounded-xl bg-action px-6 py-3.5 text-base font-semibold text-white transition-colors hover:bg-action/90 disabled:opacity-60">{saving ? "Sparar…" : "Lägg till"}</button>
                       </form>
                     </div>
-                  );
-                }
-                const s = item.data;
-                return (
-                  <div key={s.id} className="rounded-2xl border border-line bg-white p-5">
-                    <div className="flex items-start justify-between mb-1">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-widest text-muted mb-1">{item.groupLabel}</p>
-                        <p className="font-display font-semibold text-ink text-lg">{s.provider}</p>
-                      </div>
-                      <button onClick={() => handleDelete(s.id)} className="text-xs text-muted hover:text-red-500 transition-colors ml-2 mt-1" aria-label={`Ta bort ${s.provider}`}>Ta bort</button>
-                    </div>
-                    <p className="font-display font-bold text-2xl text-ink tabnum mt-2">{formatSEK(s.cost)} <span className="text-sm font-normal text-muted">kr/mån</span></p>
-                    {(s.contract_start || s.contract_end) && (
-                      <p className="text-xs text-muted mt-2">Bindningstid: {formatDate(s.contract_start) ?? "?"} – {formatDate(s.contract_end) ?? "?"}</p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                  )}
+                  {allSubscriptions.filter((_, i) => i % 2 === 0).map(({ data: s, groupLabel }) => (
+                    <SubCard key={s.id} s={s} groupLabel={groupLabel} />
+                  ))}
+                </div>
+                <div className="flex flex-col gap-4">
+                  {allSubscriptions.filter((_, i) => i % 2 === 1).map(({ data: s, groupLabel }) => (
+                    <SubCard key={s.id} s={s} groupLabel={groupLabel} />
+                  ))}
+                </div>
+              </div>
+            )}
+            {allSubscriptions.length === 0 && !formOpen && (
+              <div className="rounded-2xl border-2 border-dashed border-line p-10 text-center max-w-lg">
+                <p className="font-display font-semibold text-ink text-lg mb-2">Inga abonnemang ännu</p>
+                <p className="text-sm text-muted">Klicka på "Lägg till abonnemang" ovan för att komma igång.</p>
+              </div>
+            )}
             {subscriptions.length > 0 && (
               <div className="flex items-center justify-between rounded-2xl border border-ink/10 bg-ink/[0.03] px-5 py-4">
                 <p className="font-medium text-ink">Totalt per månad</p>
