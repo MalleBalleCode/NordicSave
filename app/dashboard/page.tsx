@@ -1,385 +1,211 @@
-// app/dashboard/page.tsx
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { signOut } from "next-auth/react";
+import Link from "next/link";
 
-// ─── Typer ───────────────────────────────────────────────────────────────────
+const CATEGORIES = [
+  { value: "bredband", label: "Bredband", placeholder: "t.ex. Telia, Bahnhof, Telenor" },
+  { value: "streaming", label: "Streaming", placeholder: "t.ex. Netflix, Spotify, HBO Max" },
+  { value: "mobilabonnemang", label: "Mobilabonnemang", placeholder: "t.ex. Comviq, Tele2, Halebop" },
+];
+
+const LOW_RATE = 0.18;
+const HIGH_RATE = 0.32;
 
 type Subscription = {
   id: string;
-  category: "bredband" | "streaming" | "mobilabonnemang";
+  category: string;
   provider: string;
   cost: number;
-  contract_start: string;
-  contract_end: string;
-  created_at: string;
+  contract_start: string | null;
+  contract_end: string | null;
 };
 
-type FormState = {
-  category: Subscription["category"];
-  provider: string;
-  cost: string;
-  contract_start: string;
-  contract_end: string;
-};
-
-const EMPTY_FORM: FormState = {
-  category: "bredband",
-  provider: "",
-  cost: "",
-  contract_start: "",
-  contract_end: "",
-};
-
-// ─── Hjälpfunktioner ─────────────────────────────────────────────────────────
-
-function categoryLabel(cat: Subscription["category"]) {
-  return { bredband: "Bredband", streaming: "Streaming", mobilabonnemang: "Mobilabonnemang" }[cat];
+function formatSEK(n: number) {
+  return Math.round(n).toLocaleString("sv-SE");
 }
 
-function categoryColor(cat: Subscription["category"]) {
-  return {
-    bredband: "#2E6DA4",
-    streaming: "#1FA67D",
-    mobilabonnemang: "#6B7280",
-  }[cat];
+function formatDate(d: string | null) {
+  if (!d) return null;
+  return new Date(d).toLocaleDateString("sv-SE", { year: "numeric", month: "short" });
 }
-
-function formatDate(dateStr: string) {
-  if (!dateStr) return "–";
-  return new Date(dateStr).toLocaleDateString("sv-SE");
-}
-
-// ─── Komponenter ─────────────────────────────────────────────────────────────
-
-function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return (
-    <div
-      style={{
-        background: "#ffffff",
-        border: "1px solid #E2E8F1",
-        borderRadius: "12px",
-        padding: "24px",
-        breakInside: "avoid",
-        marginBottom: "20px",
-        display: "inline-block",
-        width: "100%",
-        boxSizing: "border-box",
-        ...style,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-function Badge({ label, color }: { label: string; color: string }) {
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "2px 10px",
-        borderRadius: "999px",
-        fontSize: "12px",
-        fontWeight: 600,
-        color: "#fff",
-        background: color,
-        marginBottom: "12px",
-      }}
-    >
-      {label}
-    </span>
-  );
-}
-
-// ─── Huvudkomponent ───────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [loading, setLoading] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
+  const [category, setCategory] = useState("bredband");
+  const [provider, setProvider] = useState("");
+  const [cost, setCost] = useState("");
+  const [contractStart, setContractStart] = useState("");
+  const [contractEnd, setContractEnd] = useState("");
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const currentCategory = CATEGORIES.find((c) => c.value === category)!;
 
   useEffect(() => {
-    if (status === "unauthenticated") router.push("/login");
-  }, [status, router]);
-
-  useEffect(() => {
-    if (status !== "authenticated") return;
     fetch("/api/subscriptions")
       .then((r) => r.json())
-      .then((data) => {
-        setSubscriptions(Array.isArray(data) ? data : []);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Kunde inte hämta abonnemang.");
-        setLoading(false);
-      });
-  }, [status]);
+      .then((d) => { setSubscriptions(d.subscriptions ?? []); setLoading(false); });
+  }, []);
 
-  async function handleAdd() {
-    setError("");
-    if (!form.provider || !form.cost) {
-      setError("Fyll i leverantör och kostnad.");
-      return;
-    }
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    setFormError(null);
     setSaving(true);
-    try {
-      const res = await fetch("/api/subscriptions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, cost: parseFloat(form.cost) }),
-      });
-      if (!res.ok) throw new Error();
-      const newSub = await res.json();
-      setSubscriptions((prev) => [newSub, ...prev]);
-      setForm(EMPTY_FORM);
-    } catch {
-      setError("Kunde inte spara abonnemanget. Försök igen.");
-    } finally {
-      setSaving(false);
-    }
+    const res = await fetch("/api/subscriptions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ category, provider, cost, contract_start: contractStart || null, contract_end: contractEnd || null }),
+    });
+    const data = await res.json();
+    setSaving(false);
+    if (!res.ok) { setFormError(data.error ?? "Något gick fel."); return; }
+    setSubscriptions((prev) => [...prev, data.subscription]);
+    setProvider(""); setCost(""); setContractStart(""); setContractEnd("");
+    setFormOpen(false);
   }
 
   async function handleDelete(id: string) {
-    try {
-      await fetch(`/api/subscriptions/${id}`, { method: "DELETE" });
-      setSubscriptions((prev) => prev.filter((s) => s.id !== id));
-    } catch {
-      setError("Kunde inte ta bort abonnemanget.");
-    }
+    const res = await fetch(`/api/subscriptions/${id}`, { method: "DELETE" });
+    if (res.ok) setSubscriptions((prev) => prev.filter((s) => s.id !== id));
   }
 
-  if (status === "loading" || loading) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#F7F9FC", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "#6B7280", fontFamily: "system-ui, sans-serif" }}>Laddar…</p>
-      </div>
-    );
-  }
+  const totalCost = subscriptions.reduce((sum, s) => sum + s.cost, 0);
+  const lowSaving = totalCost * LOW_RATE;
+  const highSaving = totalCost * HIGH_RATE;
 
-  const totalCost = subscriptions.reduce((sum, s) => sum + (s.cost || 0), 0);
+  const grouped = CATEGORIES.map((cat) => ({
+    ...cat,
+    items: subscriptions.filter((s) => s.category === cat.value),
+  })).filter((g) => g.items.length > 0);
+
+  // Alla kort inklusive formulärkortet om det är öppet
+  type GridItem = { type: "form" } | { type: "subscription"; data: Subscription; groupLabel: string };
+
+  const gridItems: GridItem[] = [];
+  if (formOpen) gridItems.push({ type: "form" });
+  grouped.forEach((group) => {
+    group.items.forEach((s) => {
+      gridItems.push({ type: "subscription", data: s, groupLabel: group.label });
+    });
+  });
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F7F9FC", fontFamily: "system-ui, -apple-system, sans-serif" }}>
-
-      {/* ── Topbar ── */}
-      <header style={{
-        background: "#0B1F3A",
-        padding: "0 24px",
-        height: "60px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-      }}>
-        <span style={{ color: "#fff", fontWeight: 700, fontSize: "18px", letterSpacing: "-0.3px" }}>
-          NordicSave
-        </span>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <span style={{ color: "#E2E8F1", fontSize: "14px" }}>
-            {session?.user?.email}
-          </span>
-          <button
-            onClick={() => signOut({ callbackUrl: "/" })}
-            style={{
-              background: "transparent",
-              border: "1px solid #E2E8F1",
-              borderRadius: "6px",
-              color: "#E2E8F1",
-              padding: "6px 14px",
-              fontSize: "13px",
-              cursor: "pointer",
-            }}
-          >
-            Logga ut
-          </button>
+    <div className="min-h-screen bg-surface flex flex-col">
+      <header className="border-b border-line bg-surface/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-content mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
+          <Link href="/" className="font-display font-bold text-lg tracking-tightest text-ink hover:text-action transition-colors">NordicSave</Link>
+          <button onClick={() => signOut({ callbackUrl: "/" })} className="text-sm font-medium text-muted hover:text-ink transition-colors">Logga ut</button>
         </div>
       </header>
 
-      {/* ── Innehåll ── */}
-      <main style={{ maxWidth: "960px", margin: "0 auto", padding: "32px 20px" }}>
-
-        <div style={{ marginBottom: "28px" }}>
-          <h1 style={{ margin: 0, fontSize: "24px", fontWeight: 700, color: "#0B1F3A" }}>
-            Mina abonnemang
-          </h1>
-          <p style={{ margin: "6px 0 0", color: "#6B7280", fontSize: "14px" }}>
-            {subscriptions.length} abonnemang · Total kostnad{" "}
-            <strong style={{ color: "#0B1F3A" }}>{totalCost.toFixed(0)} kr/mån</strong>
-          </p>
+      <main className="flex-1 max-w-content mx-auto w-full px-6 sm:px-8 py-12">
+        <div className="mb-10">
+          <h1 className="font-display font-extrabold tracking-tightest text-ink text-3xl sm:text-4xl mb-2">Mina abonnemang</h1>
+          <p className="text-ink_soft">Lägg till dina nuvarande abonnemang så beräknar vi vad du kan spara.</p>
         </div>
 
-        {error && (
-          <div style={{
-            background: "#FEF2F2",
-            border: "1px solid #FECACA",
-            borderRadius: "8px",
-            padding: "12px 16px",
-            color: "#B91C1C",
-            fontSize: "14px",
-            marginBottom: "20px",
-          }}>
-            {error}
+        <div className="grid sm:grid-cols-3 gap-4 mb-10">
+          <div className="rounded-2xl border border-line bg-white p-6">
+            <p className="text-xs font-medium text-muted uppercase tracking-widest mb-2">Aktiva abonnemang</p>
+            <p className="font-display font-bold text-3xl tracking-tightest text-ink tabnum">{subscriptions.length}</p>
+          </div>
+          <div className="rounded-2xl border border-line bg-white p-6">
+            <p className="text-xs font-medium text-muted uppercase tracking-widest mb-2">Månadskostnad</p>
+            <p className="font-display font-bold text-3xl tracking-tightest text-ink tabnum">{formatSEK(totalCost)} kr</p>
+          </div>
+          <div className="rounded-2xl border border-gain/20 bg-gain/[0.07] p-6">
+            <p className="text-xs font-medium text-muted uppercase tracking-widest mb-2">Möjlig besparing / mån</p>
+            <p className="font-display font-bold text-3xl tracking-tightest text-gain_dark tabnum">{totalCost > 0 ? `${formatSEK(lowSaving)}–${formatSEK(highSaving)} kr` : "—"}</p>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <button onClick={() => setFormOpen((v) => !v)} className="inline-flex items-center gap-2 rounded-xl bg-action px-5 py-2.5 text-sm font-semibold text-white hover:bg-action/90 transition-colors">
+            <span>{formOpen ? "−" : "+"}</span>
+            <span>{formOpen ? "Stäng" : "Lägg till abonnemang"}</span>
+          </button>
+        </div>
+
+        {loading ? (
+          <p className="text-muted text-sm">Laddar…</p>
+        ) : gridItems.length === 0 ? (
+          <div className="rounded-2xl border-2 border-dashed border-line p-10 text-center max-w-lg">
+            <p className="font-display font-semibold text-ink text-lg mb-2">Inga abonnemang ännu</p>
+            <p className="text-sm text-muted">Klicka på "Lägg till abonnemang" ovan för att komma igång.</p>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            <div className="grid sm:grid-cols-2 gap-4 items-start">
+              {gridItems.map((item, i) => {
+                if (item.type === "form") {
+                  return (
+                    <div key="form" className="rounded-2xl border border-action/30 bg-white p-6 shadow-[0_1px_2px_rgba(11,31,58,0.04),0_12px_32px_-12px_rgba(11,31,58,0.12)]">
+                      <p className="font-display font-semibold text-lg text-ink tracking-tightest mb-4">Nytt abonnemang</p>
+                      <form onSubmit={handleAdd} className="space-y-4">
+                        {formError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{formError}</div>}
+                        <div>
+                          <label className="block text-sm text-ink_soft mb-1.5">Kategori</label>
+                          <select value={category} onChange={(e) => { setCategory(e.target.value); setProvider(""); }} className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink focus:bg-white transition-colors">
+                            {CATEGORIES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm text-ink_soft mb-1.5">Leverantör</label>
+                          <input type="text" required value={provider} onChange={(e) => setProvider(e.target.value)} placeholder={currentCategory.placeholder} className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink focus:bg-white transition-colors" />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-ink_soft mb-1.5">Månadskostnad (kr)</label>
+                          <input type="number" required min="0" value={cost} onChange={(e) => setCost(e.target.value)} placeholder="t.ex. 399" className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink focus:bg-white transition-colors tabnum" />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-ink_soft mb-1.5">Bindningstid <span className="text-muted font-normal">(valfritt)</span></label>
+                          <p className="text-xs text-muted mb-2">Den hittar du oftast på din faktura eller i operatörens app. Du kan även kontakta deras kundtjänst om du är osäker.</p>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <p className="text-xs text-muted mb-1">Från</p>
+                              <input type="date" value={contractStart} onChange={(e) => setContractStart(e.target.value)} className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink focus:bg-white transition-colors" />
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted mb-1">Till</p>
+                              <input type="date" value={contractEnd} onChange={(e) => setContractEnd(e.target.value)} className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink focus:bg-white transition-colors" />
+                            </div>
+                          </div>
+                        </div>
+                        <button type="submit" disabled={saving} className="w-full rounded-xl bg-action px-6 py-3.5 text-base font-semibold text-white transition-colors hover:bg-action/90 disabled:opacity-60">{saving ? "Sparar…" : "Lägg till"}</button>
+                      </form>
+                    </div>
+                  );
+                }
+                const s = item.data;
+                return (
+                  <div key={s.id} className="rounded-2xl border border-line bg-white p-5">
+                    <div className="flex items-start justify-between mb-1">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-widest text-muted mb-1">{item.groupLabel}</p>
+                        <p className="font-display font-semibold text-ink text-lg">{s.provider}</p>
+                      </div>
+                      <button onClick={() => handleDelete(s.id)} className="text-xs text-muted hover:text-red-500 transition-colors ml-2 mt-1" aria-label={`Ta bort ${s.provider}`}>Ta bort</button>
+                    </div>
+                    <p className="font-display font-bold text-2xl text-ink tabnum mt-2">{formatSEK(s.cost)} <span className="text-sm font-normal text-muted">kr/mån</span></p>
+                    {(s.contract_start || s.contract_end) && (
+                      <p className="text-xs text-muted mt-2">Bindningstid: {formatDate(s.contract_start) ?? "?"} – {formatDate(s.contract_end) ?? "?"}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {subscriptions.length > 0 && (
+              <div className="flex items-center justify-between rounded-2xl border border-ink/10 bg-ink/[0.03] px-5 py-4">
+                <p className="font-medium text-ink">Totalt per månad</p>
+                <p className="font-display font-bold text-ink tabnum">{formatSEK(totalCost)} kr/mån</p>
+              </div>
+            )}
           </div>
         )}
-
-        <div style={{
-          columns: "2",
-          columnGap: "20px",
-        }}>
-
-          {/* ── Formulärkort ── */}
-          <Card>
-            <h2 style={{ margin: "0 0 16px", fontSize: "16px", fontWeight: 600, color: "#0B1F3A" }}>
-              Lägg till abonnemang
-            </h2>
-
-            <label style={labelStyle}>Kategori</label>
-            <select
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value as Subscription["category"] })}
-              style={inputStyle}
-            >
-              <option value="bredband">Bredband</option>
-              <option value="streaming">Streaming</option>
-              <option value="mobilabonnemang">Mobilabonnemang</option>
-            </select>
-
-            <label style={labelStyle}>Leverantör</label>
-            <input
-              type="text"
-              placeholder="t.ex. Telia, Netflix"
-              value={form.provider}
-              onChange={(e) => setForm({ ...form, provider: e.target.value })}
-              style={inputStyle}
-            />
-
-            <label style={labelStyle}>Kostnad (kr/mån)</label>
-            <input
-              type="number"
-              placeholder="399"
-              value={form.cost}
-              onChange={(e) => setForm({ ...form, cost: e.target.value })}
-              style={inputStyle}
-            />
-
-            <label style={labelStyle}>Avtalets start</label>
-            <input
-              type="date"
-              value={form.contract_start}
-              onChange={(e) => setForm({ ...form, contract_start: e.target.value })}
-              style={inputStyle}
-            />
-
-            <label style={labelStyle}>Avtalets slut</label>
-            <input
-              type="date"
-              value={form.contract_end}
-              onChange={(e) => setForm({ ...form, contract_end: e.target.value })}
-              style={inputStyle}
-            />
-
-            <button
-              onClick={handleAdd}
-              disabled={saving}
-              style={{
-                marginTop: "4px",
-                width: "100%",
-                background: saving ? "#93b9d8" : "#2E6DA4",
-                color: "#fff",
-                border: "none",
-                borderRadius: "8px",
-                padding: "11px",
-                fontSize: "15px",
-                fontWeight: 600,
-                cursor: saving ? "not-allowed" : "pointer",
-              }}
-            >
-              {saving ? "Sparar…" : "Lägg till"}
-            </button>
-          </Card>
-
-          {/* ── Abonnemangskort ── */}
-          {subscriptions.length === 0 ? (
-            <Card>
-              <p style={{ color: "#6B7280", fontSize: "14px", margin: 0 }}>
-                Inga abonnemang registrerade än. Fyll i formuläret till vänster för att börja.
-              </p>
-            </Card>
-          ) : (
-            subscriptions.map((sub) => (
-              <Card key={sub.id}>
-                <Badge label={categoryLabel(sub.category)} color={categoryColor(sub.category)} />
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div>
-                    <p style={{ margin: "0 0 4px", fontWeight: 600, fontSize: "16px", color: "#0B1F3A" }}>
-                      {sub.provider}
-                    </p>
-                    <p style={{ margin: 0, fontSize: "22px", fontWeight: 700, color: "#1FA67D" }}>
-                      {sub.cost} <span style={{ fontSize: "13px", fontWeight: 400, color: "#6B7280" }}>kr/mån</span>
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleDelete(sub.id)}
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      color: "#6B7280",
-                      fontSize: "18px",
-                      cursor: "pointer",
-                      padding: "0",
-                      lineHeight: 1,
-                    }}
-                    title="Ta bort"
-                  >
-                    ×
-                  </button>
-                </div>
-                {(sub.contract_start || sub.contract_end) && (
-                  <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid #E2E8F1" }}>
-                    <p style={{ margin: 0, fontSize: "12px", color: "#6B7280" }}>
-                      {sub.contract_start && <>Från {formatDate(sub.contract_start)}</>}
-                      {sub.contract_start && sub.contract_end && " · "}
-                      {sub.contract_end && <>Till {formatDate(sub.contract_end)}</>}
-                    </p>
-                  </div>
-                )}
-              </Card>
-            ))
-          )}
-
-        </div>
       </main>
     </div>
   );
 }
-
-// ── Delade stilar ─────────────────────────────────────────────────────────────
-
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: "13px",
-  fontWeight: 500,
-  color: "#0B1F3A",
-  marginBottom: "4px",
-  marginTop: "12px",
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "9px 12px",
-  border: "1px solid #E2E8F1",
-  borderRadius: "7px",
-  fontSize: "14px",
-  color: "#0B1F3A",
-  background: "#F7F9FC",
-  boxSizing: "border-box",
-  outline: "none",
-};
