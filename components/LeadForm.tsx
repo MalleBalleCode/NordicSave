@@ -1,20 +1,15 @@
 "use client";
-
 import { useState, FormEvent } from "react";
-
 type Status = "idle" | "submitting" | "success" | "error";
-
 const FORMSPREE_URL = "https://formspree.io/f/xlgyelqy";
-
 export default function LeadForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-
+  const [phone, setPhone] = useState("");
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus("submitting");
-
     try {
       const response = await fetch(FORMSPREE_URL, {
         method: "POST",
@@ -22,9 +17,8 @@ export default function LeadForm() {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ name, email }),
+        body: JSON.stringify({ name, email, phone }),
       });
-
       if (response.ok) {
         setStatus("success");
       } else {
@@ -34,7 +28,6 @@ export default function LeadForm() {
       setStatus("error");
     }
   }
-
   if (status === "success") {
     return (
       <div
@@ -50,7 +43,6 @@ export default function LeadForm() {
       </div>
     );
   }
-
   return (
     <form
       onSubmit={handleSubmit}
@@ -62,7 +54,6 @@ export default function LeadForm() {
       <p className="text-sm text-muted mb-6">
         Inga förpliktelser. Du betalar bara om vi faktiskt sänker din kostnad.
       </p>
-
       <div className="space-y-4">
         <div>
           <label htmlFor="name" className="block text-sm text-ink_soft mb-1.5">
@@ -79,7 +70,6 @@ export default function LeadForm() {
             placeholder="Anna Andersson"
           />
         </div>
-
         <div>
           <label htmlFor="email" className="block text-sm text-ink_soft mb-1.5">
             E-post
@@ -95,8 +85,22 @@ export default function LeadForm() {
             placeholder="anna@exempel.se"
           />
         </div>
+        <div>
+          <label htmlFor="phone" className="block text-sm text-ink_soft mb-1.5">
+            Telefonnummer
+          </label>
+          <input
+            id="phone"
+            type="tel"
+            name="phone"
+            required
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink focus:bg-white transition-colors"
+            placeholder="070-123 45 67"
+          />
+        </div>
       </div>
-
       <button
         type="submit"
         disabled={status === "submitting"}
@@ -104,7 +108,6 @@ export default function LeadForm() {
       >
         {status === "submitting" ? "Skickar…" : "Kom igång gratis"}
       </button>
-
       {status === "error" && (
         <p role="alert" className="mt-3 text-sm text-red-600">
           Något gick fel. Försök igen, eller mejla oss direkt på
