@@ -93,13 +93,12 @@ export default function Home() {
       <section id="vision" className="border-t border-line bg-ink">
         <div className="max-w-content mx-auto px-6 sm:px-8 py-16 sm:py-24">
           <p className="text-xs font-medium text-white/50 uppercase tracking-wide mb-4">Vår vision</p>
-          <h2 className="font-display font-bold tracking-tightest text-white text-2xl sm:text-3xl mb-12 max-w-2xl">
-            Ingen säljare. Inga dolda agendor. Bara vi, på din sida.
+         <h2 className="font-display font-bold tracking-tightest text-white text-2xl sm:text-3xl mb-12 max-w-2xl">
+            Vi hjälper dig skapa en överblick över dina räkningar, erbjuder ett sätt att sänka dem utan krångel och utan dolda agendor. Bara vi, på din sida.
           </h2>
           <div className="grid sm:grid-cols-2 gap-x-12 gap-y-8">
-            <VisionPoint text="Du ska slippa säljare. Vi sköter kontakten med leverantörerna åt dig." />
-            <VisionPoint text="Att hitta den bästa dealen ska inte vara bökigt — vi gör det enkelt." />
             <VisionPoint text="Vi hjälper dig förstå vad du faktiskt betalar för och vad som passar dig bäst." />
+            <VisionPoint text="Att hitta den bästa dealen ska inte vara bökigt — vi gör det enkelt." />
             <VisionPoint text="Inga dolda agendor från vår sida — bara så mycket valuta för pengarna som möjligt." />
           </div>
         </div>
