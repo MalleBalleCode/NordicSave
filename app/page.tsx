@@ -85,6 +85,22 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Vision */}
+      <section className="border-t border-line bg-ink">
+        <div className="max-w-content mx-auto px-6 sm:px-8 py-16 sm:py-24">
+          <p className="text-xs font-medium text-white/50 uppercase tracking-wide mb-4">Vår vision</p>
+          <h2 className="font-display font-bold tracking-tightest text-white text-2xl sm:text-3xl mb-12 max-w-2xl">
+            Ingen säljare. Inga dolda agendor. Bara vi, på din sida.
+          </h2>
+          <div className="grid sm:grid-cols-2 gap-x-12 gap-y-8">
+            <VisionPoint text="Du ska slippa säljare. Vi sköter kontakten med leverantörerna åt dig." />
+            <VisionPoint text="Att hitta den bästa dealen ska inte vara bökigt — vi gör det enkelt." />
+            <VisionPoint text="Vi hjälper dig förstå vad du faktiskt betalar för och vad som passar dig bäst." />
+            <VisionPoint text="Inga dolda agendor från vår sida — bara så mycket valuta för pengarna som möjligt." />
+          </div>
+        </div>
+      </section>
+
       {/* Kundcase */}
       <section className="border-t border-line bg-white">
         <div className="max-w-content mx-auto px-6 sm:px-8 py-16 sm:py-24">
@@ -132,6 +148,15 @@ function Step({ label, text }: { label: string; text: string }) {
     <div className="border-t-2 border-ink pt-5">
       <p className="font-display font-semibold text-lg text-ink mb-2">{label}</p>
       <p className="text-sm text-muted leading-relaxed">{text}</p>
+    </div>
+  );
+}
+
+function VisionPoint({ text }: { text: string }) {
+  return (
+    <div className="flex gap-4">
+      <span className="w-1 shrink-0 bg-gain rounded-full" />
+      <p className="text-white/80 leading-relaxed">{text}</p>
     </div>
   );
 }
