@@ -100,6 +100,9 @@ export default function Home() {
             <VisionPoint text="Vi hjälper dig förstå vad du faktiskt betalar för och vad som passar dig bäst." />
             <VisionPoint text="Att hitta den bästa dealen ska inte vara bökigt — vi gör det enkelt." />
             <VisionPoint text="Inga dolda agendor från vår sida — bara så mycket valuta för pengarna som möjligt." />
+            <VisionPoint text="Ingen kostnad om vi inte hittar besparingar." />
+            <VisionPoint text="Du godkänner alltid själv eventuella byten." />
+            <VisionPoint text="NordicSave är en oberoende rådgivningstjänst." />
           </div>
         </div>
       </section>
